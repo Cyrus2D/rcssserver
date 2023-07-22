@@ -551,6 +551,9 @@ public:
       {
           turnImpl();
       }
+
+    virtual
+    void applyStoredCommands() = 0;
 private:
     PVector noise();
     PVector wind();
@@ -646,6 +649,10 @@ public:
 
     virtual
     void updateAngle() override
+      { }
+
+    virtual
+    void applyStoredCommands() override
       { }
 
     virtual

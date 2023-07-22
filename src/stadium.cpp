@@ -912,12 +912,22 @@ Stadium::incMovableObjects()
 {
     std::shuffle( M_movable_objects.begin(), M_movable_objects.end(),
                   DefaultRNG::instance() );
+    MPObject * ball_ptr = nullptr;
     for ( MPObjectCont::reference o : M_movable_objects )
     {
+        if ( o->name() == "(ball)"){
+            ball_ptr = o;
+        }
         if ( o->isEnabled() )
         {
-            o->_inc();
+//            o->_inc();
+            o->applyStoredCommands();
         }
+    }
+
+    if (ball_ptr != nullptr && ball_ptr->isEnabled())
+    {
+        ball_ptr->_inc();
     }
 
     collisions();
