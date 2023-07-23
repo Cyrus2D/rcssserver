@@ -1,0 +1,32 @@
+parse messages and modify variables
+
+******************
+******************
+
+reset player command flags
+incMoveableObjectes*
+    shuffle players and ball
+
+    for obj in objects:
+        obj.inc*
+            update vel with accel
+            
+            updateAngle*
+                update neck and body (players only)
+
+            add noise to vel
+
+            check collision with post
+            check collision with post again??
+
+            update pos by vel
+            update vel by decay
+            update accel to zero
+
+    collisions*
+        check players and ball collisions
+
+    check ball catcher
+
+update players stamina
+reset players states

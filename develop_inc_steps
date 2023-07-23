@@ -1,0 +1,37 @@
+parse messages
+
+***********************
+***********************
+
+reset player command flags
+incMoveableObjectes*
+    shuffle players
+
+    for player in players:
+        applyStoredCommands*
+            for command in commands:
+                modify variables
+                inc*
+                    update vel with accel
+                
+                    updateAngle*
+                        update neck and body (players only)
+
+                    add noise to vel
+
+                    check collision with post
+                    check collision with post again??
+
+                    update pos by vel
+                    update vel by decay
+                    update accel to zero
+    
+    ball->inc
+
+    collisions*
+
+    check ball catcher
+
+
+Notes:
+M_angle_neck/body are not reset after applying. *SUS*
