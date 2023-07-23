@@ -710,20 +710,6 @@ Player::parseCommand( const char * command )
 
             kick( power, dir );
         }
-        else if ( ! std::strncmp( buf, "(long_kick ", 11 ) )
-        {
-            double power = 0.0;
-            double dir = 0.0;
-            if ( std::sscanf( buf, " ( long_kick %lf %lf ) %n ",
-                              &power, &dir, &n_read ) != 2 )
-            {
-                std::cerr << "Error parsing >" << buf << "<\n";
-                return false;
-            }
-            buf += n_read;
-
-            long_kick( power, dir );
-        }
         else if ( ! std::strncmp( buf, "(tackle ", 8 ) )
         {
             double power_or_dir = 0.0;
@@ -1302,109 +1288,6 @@ Player::kick( double power,
     //                       << " " << kick_noise.r()
     //                       << " " << max_rand
     //                       << std::endl;
-
-    M_stadium.kickTaken( *this, accel );
-
-    ++M_kick_count;
-}
-
-// 2011-05-14 akiyama
-// added for testing purpose
-void
-Player::long_kick( double power,
-                   double dir )
-{
-    return;
-
-    if ( M_command_done )
-    {
-        return;
-    }
-
-    M_command_done = true;
-    M_kick_cycles = ServerParam::instance().longKickDelay() + 1;
-
-    M_long_kick_power = NormalizeKickPower( power );
-    M_long_kick_dir = NormalizeMoment( dir );
-
-    M_state |= KICK;
-}
-
-void
-Player::doLongKick()
-{
-    if ( ! isEnabled() )
-    {
-        return;
-    }
-
-    if ( M_kick_cycles != 1 )
-    {
-        return;
-    }
-
-    if ( M_stadium.playmode() == PM_BeforeKickOff ||
-         M_stadium.playmode() == PM_AfterGoal_Left ||
-         M_stadium.playmode() == PM_AfterGoal_Right ||
-         M_stadium.playmode() == PM_OffSide_Left ||
-         M_stadium.playmode() == PM_OffSide_Right ||
-         M_stadium.playmode() == PM_Illegal_Defense_Left ||
-         M_stadium.playmode() == PM_Illegal_Defense_Right ||
-         M_stadium.playmode() == PM_Foul_Charge_Left ||
-         M_stadium.playmode() == PM_Foul_Charge_Right ||
-         M_stadium.playmode() == PM_Foul_Push_Left ||
-         M_stadium.playmode() == PM_Foul_Push_Right ||
-         M_stadium.playmode() == PM_Back_Pass_Left ||
-         M_stadium.playmode() == PM_Back_Pass_Right ||
-         M_stadium.playmode() == PM_Free_Kick_Fault_Left ||
-         M_stadium.playmode() == PM_Free_Kick_Fault_Right ||
-         M_stadium.playmode() == PM_CatchFault_Left ||
-         M_stadium.playmode() == PM_CatchFault_Right ||
-         M_stadium.playmode() == PM_TimeOver )
-    {
-        M_state |= KICK_FAULT;
-        return;
-    }
-
-    if ( ! ballKickable() )
-    {
-        M_state |= KICK_FAULT;
-        M_stadium.failedKickTaken( *this );
-        return;
-    }
-
-    double dir_diff = std::fabs( angleFromBody( M_stadium.ball() ) );
-    PVector rpos = M_stadium.ball().pos() - this->pos();
-    double dist_ball
-        = rpos.r()
-        - M_player_type->playerSize()
-        - ServerParam::instance().ballSize();
-
-    double eff_power = M_long_kick_power
-        * ( M_player_type->kickPowerRate() * ServerParam::instance().longKickPowerFactor() )
-        * (1.0 - 0.25*dir_diff/M_PI - 0.25*dist_ball/M_player_type->kickableMargin());
-
-    PVector accel = PVector::fromPolar( eff_power,
-                                        M_long_kick_dir + angleBodyCommitted() );
-
-    // [0.5, 1.0]
-    double pos_rate
-        = 0.5
-        + 0.25 * ( dir_diff/M_PI + dist_ball/M_player_type->kickableMargin() );
-    // [0.5, 1.0]
-    double speed_rate
-        = 0.5
-        + 0.5 * ( M_stadium.ball().vel().r()
-                  / ( ServerParam::instance().ballSpeedMax()
-                      * ServerParam::instance().ballDecay() ) );
-    // [0, 2*kick_rand]
-    double max_rand
-        = M_kick_rand
-        * ( M_long_kick_power / ServerParam::instance().maxPower() )
-        * ( pos_rate + speed_rate );
-    PVector kick_noise = PVector::fromPolar( drand( 0.0, max_rand ),
-                                             drand( -M_PI, M_PI ) );
-    accel += kick_noise;
 
     M_stadium.kickTaken( *this, accel );
 

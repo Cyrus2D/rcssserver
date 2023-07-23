@@ -56,7 +56,6 @@ turn { return RCSS_PCOM_TURN; }
 turn_neck { return RCSS_PCOM_TURN_NECK; }
 change_focus { return RCSS_PCOM_CHANGE_FOCUS; }
 kick { return RCSS_PCOM_KICK; }
-long_kick { return RCSS_PCOM_LONG_KICK; }
 catch { return RCSS_PCOM_CATCH; }
 say { return RCSS_PCOM_SAY; }
 sense_body { return RCSS_PCOM_SENSE_BODY; }

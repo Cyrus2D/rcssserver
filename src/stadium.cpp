@@ -2206,7 +2206,7 @@ Stadium::doRecvFromClients()
                       DefaultRNG::instance() );
         for ( PlayerCont::reference p : M_shuffle_players )
         {
-            p->doLongKick();
+//            p->doLongKick();
         }
     }
 

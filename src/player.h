@@ -188,9 +188,6 @@ private:
     int M_foul_cycles;
     int M_foul_count;
 
-    double M_long_kick_power;
-    double M_long_kick_dir;
-
     double M_wide_view_angle_noise_term;
     double M_normal_view_angle_noise_term;
     double M_narrow_view_angle_noise_term;
@@ -449,9 +446,6 @@ public:
                 const PVector & vel,
                 const PVector & accel );
 
-    // 2011-05-14 akiyama
-    void doLongKick();
-
 protected:
 
     virtual
@@ -477,7 +471,6 @@ private:
     void turn_neck( double moment ) override;
     void change_focus( double moment_dist, double moment_dir) override;
     void kick( double power, double dir ) override;
-    void long_kick( double power, double dir ) override;
     void goalieCatch( double dir ) override;
     void say( std::string message ) override;
     /*! This function is called in the begin of each cycle

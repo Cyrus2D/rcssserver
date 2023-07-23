@@ -379,10 +379,6 @@ constexpr double MAX_CATCH_ANGLE = +90.0;
 constexpr double MIN_CATCH_ANGLE = -90.0;
 }
 
-// XXX
-const double ServerParam::LONG_KICK_POWER_FACTOR = 2.0;
-const int ServerParam::LONG_KICK_DELAY = 2;
-
 ServerParam &
 ServerParam::instance()
 {
@@ -948,8 +944,6 @@ ServerParam::addParams()
 
     // XXX
     // addParam( "random_seed", M_random_seed, "", 999 );
-    // addParam( "long_kick_power_factor", M_long_kick_power_factor, "", 999 );
-    // addParam( "long_kick_delay", M_long_kick_delay, "", 999 );
 
 
 }
@@ -1452,10 +1446,6 @@ ServerParam::setDefaults()
     // 17.0.0
     M_max_catch_angle = MAX_CATCH_ANGLE;
     M_min_catch_angle = MIN_CATCH_ANGLE;
-
-    // XXX
-    M_long_kick_power_factor = LONG_KICK_POWER_FACTOR;
-    M_long_kick_delay = LONG_KICK_DELAY;
 
     setHalfTime( HALF_TIME );
     setExtraHalfTime( EXTRA_HALF_TIME );
