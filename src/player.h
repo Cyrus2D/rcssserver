@@ -43,6 +43,165 @@ class BodyObserverPlayer;
 class FullStateObserver;
 }
 
+class MainCommand
+{
+public:
+    enum Type {
+        MC_DASH,
+        MC_TURN,
+        MC_KICK,
+        MC_CATCH,
+        MC_MOVE,
+        MC_TACKLE,
+        MC_LONG_KICK
+    };
+
+    typedef std::shared_ptr<MainCommand> Ptr;
+
+protected:
+    MainCommand(){};
+    Type M_type;
+
+public:
+    virtual ~MainCommand()=default;
+
+    const Type& type() const
+    {
+        return M_type;
+    }
+};
+
+class MainCommandDash: public MainCommand
+{
+private:
+    double M_power;
+    double M_dir;
+
+public:
+    MainCommandDash(double power, double dir)
+    {
+        M_type = MainCommand::MC_DASH;
+        M_power = power;
+        M_dir = dir;
+    }
+
+    const double& power() const
+    {
+        return M_power;
+    }
+
+    const double& dir() const
+    {
+        return M_dir;
+    }
+};
+
+class MainCommandTurn: public MainCommand
+{
+private:
+    double M_moment;
+public:
+    MainCommandTurn(double moment)
+    {
+        M_type = MainCommand::MC_TURN;
+        M_moment = moment;
+    }
+
+    const double& moment() const
+    {
+        return M_moment;
+    }
+};
+
+class MainCommandKick: public MainCommand
+{
+private:
+    double M_power;
+    double M_dir;
+public:
+    MainCommandKick(double power, double dir)
+    {
+        M_type = MainCommand::MC_KICK;
+        M_power = power;
+        M_dir = dir;
+    }
+
+    const double& power() const
+    {
+        return M_power;
+    }
+
+    const double& dir() const
+    {
+        return M_dir;
+    }
+};
+
+class MainCommandMove: public MainCommand
+{
+private:
+    double M_x;
+    double M_y;
+public:
+    MainCommandMove(double x, double y)
+    {
+        M_type = MainCommand::MC_MOVE;
+        M_x = x;
+        M_y = y;
+    }
+
+    const double& x() const
+    {
+        return M_x;
+    }
+
+    const double& y() const
+    {
+        return M_y;
+    }
+};
+
+class MainCommandCatch: public MainCommand
+{
+private:
+    double M_dir;
+public:
+    MainCommandCatch(double dir)
+    {
+        M_type = MainCommand::MC_CATCH;
+        M_dir = dir;
+    }
+
+    const double& dir() const
+    {
+        return M_dir;
+    }
+};
+
+class MainCommandTackle: public MainCommand
+{
+private:
+    double M_power;
+    bool M_foul;
+public:
+    MainCommandTackle(double power, bool foul)
+    {
+        M_type = MainCommand::MC_TACKLE;
+        M_power = power;
+        M_foul = foul;
+    }
+
+    const double& power() const
+    {
+        return M_power;
+    }
+
+    const bool& foul() const
+    {
+        return M_foul;
+    }
+};
+
 class Player
     : public MPObject,
       public RemoteClient,
