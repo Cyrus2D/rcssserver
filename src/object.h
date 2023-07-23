@@ -607,6 +607,12 @@ protected:
     virtual
     void turnImpl() = 0;
 
+    void updateVel();
+
+    void addNoiseWindToVel();
+
+    PVector getPosUpdateVelForCollidedWithPost();
+
     virtual
     void updateAngle() = 0;
 

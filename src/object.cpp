@@ -475,6 +475,39 @@ MPObject::wind()
 void
 MPObject::_inc()
 {
+    updateVel();
+
+    updateAngle();
+
+    addNoiseWindToVel();
+
+    PVector new_pos = getPosUpdateVelForCollidedWithPost();
+    M_pos = new_pos;
+    M_vel *= M_decay;
+    M_accel *= 0.0;
+}
+
+// void MPObject::collide(MPObject& obj)
+// {
+//     double r = size + obj.size;
+//     PVector dif = (pos - obj.pos);
+//     double d = pos.distance(obj.pos);
+//     Angle th = fabs(dif.angle(vel));
+//     double l1 = d * cos(th);
+//     double h = d * sin(th);
+//     double cosp = h / r;
+//     double sinp = sqrt(1.0 - square(cosp));
+//     double l2 = r * sinp;
+//     PVector dv = vel;
+
+//     dv.normalize(-(l1 + l2));
+
+//     pos += dv;
+// }
+
+void
+MPObject::updateVel()
+{
     if ( M_accel.x || M_accel.y )
     {
         double max_a = maxAccel();
@@ -493,12 +526,18 @@ MPObject::_inc()
             M_vel *= ( max_s / tmp );
         }
     }
+}
 
-    updateAngle();
-
+void
+MPObject::addNoiseWindToVel()
+{
     M_vel += noise();
     M_vel += wind();
+}
 
+PVector
+MPObject::getPosUpdateVelForCollidedWithPost()
+{
     CArea post = nearestPost( pos(), M_size );
 
     //      std::cout << "pos = " << pos << endl;
@@ -560,8 +599,8 @@ MPObject::_inc()
             && ( ( intersect( pos(), new_pos, post, inter ) )
                  || ( post != second_post
                       && ( second = intersect( pos(), new_pos, second_post, inter ) )
-                      )
                  )
+            )
             )
     {
         //         ++loop_count;
@@ -618,30 +657,8 @@ MPObject::_inc()
 
         collidedWithPost();
     }
-
-    M_pos = new_pos;
-    M_vel *= M_decay;
-    M_accel *= 0.0;
+    return new_pos;
 }
-
-// void MPObject::collide(MPObject& obj)
-// {
-//     double r = size + obj.size;
-//     PVector dif = (pos - obj.pos);
-//     double d = pos.distance(obj.pos);
-//     Angle th = fabs(dif.angle(vel));
-//     double l1 = d * cos(th);
-//     double h = d * sin(th);
-//     double cosp = h / r;
-//     double sinp = sqrt(1.0 - square(cosp));
-//     double l2 = r * sinp;
-//     PVector dv = vel;
-
-//     dv.normalize(-(l1 + l2));
-
-//     pos += dv;
-// }
-
 
 void
 MPObject::moveToCollisionPos()
