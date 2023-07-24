@@ -547,6 +547,9 @@ public:
 
     void _inc();
 
+    virtual
+    void applyStoredCommands(){}
+
     void _turn()
       {
           turnImpl();

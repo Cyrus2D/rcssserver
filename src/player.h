@@ -51,9 +51,7 @@ public:
         MC_TURN,
         MC_KICK,
         MC_CATCH,
-        MC_MOVE,
         MC_TACKLE,
-        MC_LONG_KICK
     };
 
     typedef std::shared_ptr<MainCommand> Ptr;
@@ -134,30 +132,6 @@ public:
     const double& dir() const
     {
         return M_dir;
-    }
-};
-
-class MainCommandMove: public MainCommand
-{
-private:
-    double M_x;
-    double M_y;
-public:
-    MainCommandMove(double x, double y)
-    {
-        M_type = MainCommand::MC_MOVE;
-        M_x = x;
-        M_y = y;
-    }
-
-    const double& x() const
-    {
-        return M_x;
-    }
-
-    const double& y() const
-    {
-        return M_y;
     }
 };
 
@@ -317,6 +291,7 @@ private:
     //
     // command state
     //
+    std::vector<MainCommand::Ptr> M_stored_main_commands;
     bool M_command_done;
     bool M_turn_neck_done;
     bool M_done_received; //pfr:SYNCH
@@ -354,6 +329,7 @@ private:
     // not used
     Player() = delete;
     const Player & operator=( const Player & ) = delete;
+    bool canProcessMainCommand(const MainCommand::Type & command_type);
 
 public:
     Player( Stadium & stadium,
@@ -605,6 +581,7 @@ public:
                 const PVector & vel,
                 const PVector & accel );
 
+    void applyStoredCommands() override;
 protected:
 
     virtual
@@ -626,11 +603,15 @@ private:
     /** PlayerCommands */
     void dash( double power ) override;
     void dash( double power, double dir ) override;
+    void applyDash( double power, double dir );
     void turn( double moment ) override;
+    void applyTurn( double moment );
     void turn_neck( double moment ) override;
     void change_focus( double moment_dist, double moment_dir) override;
     void kick( double power, double dir ) override;
+    void applyKick( double power, double dir );
     void goalieCatch( double dir ) override;
+    void applyGoalieCatch( double dir );
     void say( std::string message ) override;
     /*! This function is called in the begin of each cycle
       and in case a player sends a sense_body command. */
@@ -646,6 +627,7 @@ private:
     void attentionto( bool on, rcss::pcom::TEAM team_side, std::string team_name, int at_unum ) override;
     void tackle( double power_or_angle ) override;
     void tackle( double power_or_angle, bool foul ) override;
+    void applyTackle( double power_or_angle, bool foul );
     void clang( int min, int max) override;
     void ear( bool on, rcss::pcom::TEAM team_side, std::string team_name, rcss::pcom::EAR_MODE mode ) override;
     void synch_see() override;

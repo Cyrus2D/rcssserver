@@ -921,7 +921,7 @@ Stadium::incMovableObjects()
         }
         if ( o->isEnabled() )
         {
-            o->_inc();
+            o->applyStoredCommands();
         }
     }
 
