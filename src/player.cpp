@@ -2325,9 +2325,14 @@ Player::turnImpl()
 }
 
 void
-Player::updateAngle()
+Player::updateBodyAngle()
 {
     M_angle_body_committed = this->M_angle_body;
+}
+
+void
+Player::updateNeckAngle()
+{
     M_angle_neck_committed = this->M_angle_neck;
 }
 

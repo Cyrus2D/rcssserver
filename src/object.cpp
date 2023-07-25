@@ -477,7 +477,7 @@ MPObject::_inc()
 {
     updateVel();
 
-    updateAngle();
+    updateBodyAngle();
 
     addNoiseWindToVel();
 

@@ -587,7 +587,9 @@ protected:
     virtual
     void turnImpl() override;
     virtual
-    void updateAngle() override;
+    void updateBodyAngle() override;
+    virtual
+    void updateNeckAngle() override;
     virtual
     void collidedWithPost() override;
     virtual
