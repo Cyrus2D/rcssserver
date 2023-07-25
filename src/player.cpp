@@ -2690,6 +2690,5 @@ void Player::applyStoredCommands()
         }
         this->_inc();
     }
-
-    M_stored_main_commands.clear();
+    this->updateNeckAngle();
 }
