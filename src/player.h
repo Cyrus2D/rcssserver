@@ -292,6 +292,7 @@ private:
     // command state
     //
     std::vector<MainCommand::Ptr> M_stored_main_commands;
+    std::vector<std::pair<MainCommand::Type, MainCommand::Type>> M_possible_commands_pairs;
     bool M_command_done;
     bool M_turn_neck_done;
     bool M_done_received; //pfr:SYNCH
@@ -330,7 +331,7 @@ private:
     Player() = delete;
     const Player & operator=( const Player & ) = delete;
     bool canProcessMainCommand(const MainCommand::Type & command_type);
-
+    void setDefaultPossibleMainPairCommands();
 public:
     Player( Stadium & stadium,
             Team * team,

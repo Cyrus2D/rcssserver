@@ -248,6 +248,8 @@ Player::Player( Stadium & stadium,
     M_pos.x = -( unum() * 3 * team->side() );
     M_pos.y = - ServerParam::PITCH_WIDTH/2.0 - 3.0;
 
+    setDefaultPossibleMainPairCommands();
+
     setPlayerType( 0 );
     recoverAll();
 }
@@ -374,14 +376,34 @@ bool Player::canProcessMainCommand(const MainCommand::Type & command_type)
         return false;
     }
 
-    if ( M_stored_main_commands.size() == 1){
+    if ( M_stored_main_commands.size() == 2){
         return false;
     }
 
     if ( M_stored_main_commands.empty()){
         return true;
     }
-    return true;
+
+    auto pair_commands = std::make_pair(M_stored_main_commands.at(0)->type(), command_type);
+    auto it = std::find_if( M_possible_commands_pairs.begin(), M_possible_commands_pairs.end(),
+                            [&pair_commands](const std::pair<MainCommand::Type, MainCommand::Type>& element)
+                            { return element.first == pair_commands.first &&
+                                     element.second == pair_commands.second;} );
+    if ( it != M_possible_commands_pairs.end() )
+    {
+        return true;
+    }
+
+    return false;
+}
+
+
+void Player::setDefaultPossibleMainPairCommands()
+{
+    M_possible_commands_pairs.emplace_back(MainCommand::MC_TURN, MainCommand::MC_DASH);
+    M_possible_commands_pairs.emplace_back(MainCommand::MC_DASH, MainCommand::MC_TURN);
+    M_possible_commands_pairs.emplace_back(MainCommand::MC_KICK, MainCommand::MC_TURN);
+    M_possible_commands_pairs.emplace_back(MainCommand::MC_KICK, MainCommand::MC_DASH);
 }
 
 void
@@ -2580,6 +2602,8 @@ Player::resetCommandFlags()
     M_turn_neck_done = false;
 
     M_done_received = false;
+
+    M_stored_main_commands.clear();
 }
 
 void
