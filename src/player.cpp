@@ -2602,8 +2602,6 @@ Player::resetCommandFlags()
     M_turn_neck_done = false;
 
     M_done_received = false;
-
-    M_stored_main_commands.clear();
 }
 
 void
@@ -2693,4 +2691,5 @@ void Player::applyStoredCommands()
     if (M_stored_main_commands.empty())
         this->_inc();
     this->updateNeckAngle();
+    M_stored_main_commands.clear();
 }
