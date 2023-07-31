@@ -548,7 +548,7 @@ public:
     void _inc();
 
     virtual
-    void applyStoredCommands(){}
+    void applyStoredCommands(bool call_inc=true){}
 
     void _turn()
       {

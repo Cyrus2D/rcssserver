@@ -903,6 +903,7 @@ Stadium::turnMovableObjects()
                   DefaultRNG::instance() );
     for ( MPObjectCont::reference o : M_movable_objects )
     {
+        o->applyStoredCommands(false);
         o->_turn();
     }
 }

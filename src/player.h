@@ -607,7 +607,7 @@ public:
                 const PVector & vel,
                 const PVector & accel );
 
-    void applyStoredCommands() override;
+    void applyStoredCommands(bool call_inc=true) override;
 protected:
 
     virtual

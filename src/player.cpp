@@ -2694,7 +2694,7 @@ Player::place( const PVector & pos,
     M_accel = accel;
 }
 
-void Player::applyStoredCommands()
+void Player::applyStoredCommands(bool call_inc)
 {
     for (const auto & command: M_stored_main_commands){
         if (command->type() == MainCommand::MC_DASH){
@@ -2721,10 +2721,14 @@ void Player::applyStoredCommands()
             const auto* move_command = dynamic_cast<const MainCommandMove*>(command.get());
             applyMove(move_command->x(), move_command->y());
         }
-        this->_inc();
+        if (call_inc)
+            this->_inc();
     }
-    if (M_stored_main_commands.empty())
-        this->_inc();
-    this->updateNeckAngle();
+    if (call_inc){
+        if (M_stored_main_commands.empty())
+            this->_inc();
+        this->updateNeckAngle();
+    }
+
     M_stored_main_commands.clear();
 }
