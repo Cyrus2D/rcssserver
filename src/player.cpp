@@ -1925,6 +1925,8 @@ void
 Player::applyTackle( double power_or_angle,
                      bool foul )
 {
+    M_command_done = true;
+
     M_tackle_cycles = ServerParam::instance().tackleCycles();
     ++M_tackle_count;
 
