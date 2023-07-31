@@ -646,6 +646,7 @@ private:
     void sense_body() override;
     void score() override;
     void move( double x, double y ) override;
+    void applyMove( double x, double y );
     void change_view( rcss::pcom::VIEW_WIDTH viewWidth, rcss::pcom::VIEW_QUALITY viewQuality ) override;
     void change_view( rcss::pcom::VIEW_WIDTH viewWidth ) override;
     void compression( int level ) override;
