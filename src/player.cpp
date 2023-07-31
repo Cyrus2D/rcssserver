@@ -384,6 +384,22 @@ bool Player::canProcessMainCommand(const MainCommand::Type & command_type)
         return true;
     }
 
+    if ( M_stored_main_commands.front()->type() == MainCommand::Type::MC_MOVE){
+        return false;
+    }
+
+    if (command_type == MainCommand::Type::MC_MOVE && M_stored_main_commands.size() == 1){
+        return false;
+    }
+
+    if ( M_stored_main_commands.front()->type() == MainCommand::Type::MC_TACKLE){
+        return false;
+    }
+
+    if ( M_stored_main_commands.front()->type() == MainCommand::Type::MC_CATCH){
+        return false;
+    }
+
     auto pair_commands = std::make_pair(M_stored_main_commands.at(0)->type(), command_type);
     auto it = std::find_if( M_possible_commands_pairs.begin(), M_possible_commands_pairs.end(),
                             [&pair_commands](const std::pair<MainCommand::Type, MainCommand::Type>& element)
