@@ -1551,11 +1551,15 @@ void
 Player::move( double x,
               double y )
 {
-    if ( M_command_done )
-    {
-        return;
+    if (canProcessMainCommand(MainCommand::Type::MC_MOVE)){
+        M_stored_main_commands.push_back(std::make_shared<MainCommandMove>(x, y));
     }
+}
 
+void
+Player::applyMove( double x,
+                   double y )
+{
     if ( M_stadium.playmode() == PM_BeforeKickOff ||
          M_stadium.playmode() == PM_AfterGoal_Right ||
          M_stadium.playmode() == PM_AfterGoal_Left
@@ -1595,7 +1599,6 @@ Player::move( double x,
         return;
     }
 
-    M_command_done = true;
     ++M_move_count;
 }
 
@@ -2685,6 +2688,10 @@ void Player::applyStoredCommands()
         else if (command->type() == MainCommand::MC_TACKLE){
             const auto* tackle_command = dynamic_cast<const MainCommandTackle*>(command.get());
             applyTackle(tackle_command->power(), tackle_command->foul());
+        }
+        else if (command->type() == MainCommand::MC_MOVE){
+            const auto* move_command = dynamic_cast<const MainCommandMove*>(command.get());
+            applyMove(move_command->x(), move_command->y());
         }
         this->_inc();
     }

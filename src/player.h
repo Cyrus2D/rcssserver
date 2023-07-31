@@ -52,6 +52,7 @@ public:
         MC_KICK,
         MC_CATCH,
         MC_TACKLE,
+        MC_MOVE,
     };
 
     typedef std::shared_ptr<MainCommand> Ptr;
@@ -173,6 +174,30 @@ public:
     const bool& foul() const
     {
         return M_foul;
+    }
+};
+
+class MainCommandMove: public MainCommand
+{
+private:
+    double M_x;
+    double M_y;
+public:
+    MainCommandMove(double x, double y)
+    {
+        M_type = MainCommand::MC_MOVE;
+        M_x = x;
+        M_y = y;
+    }
+
+    const double& x() const
+    {
+        return M_x;
+    }
+
+    const double& y() const
+    {
+        return M_y;
     }
 };
 
