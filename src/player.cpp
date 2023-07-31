@@ -419,7 +419,17 @@ void Player::setDefaultPossibleMainPairCommands()
     M_possible_commands_pairs.emplace_back(MainCommand::MC_TURN, MainCommand::MC_DASH);
     M_possible_commands_pairs.emplace_back(MainCommand::MC_DASH, MainCommand::MC_TURN);
     M_possible_commands_pairs.emplace_back(MainCommand::MC_KICK, MainCommand::MC_TURN);
+    M_possible_commands_pairs.emplace_back(MainCommand::MC_TURN, MainCommand::MC_KICK);
     M_possible_commands_pairs.emplace_back(MainCommand::MC_KICK, MainCommand::MC_DASH);
+    M_possible_commands_pairs.emplace_back(MainCommand::MC_DASH, MainCommand::MC_KICK);
+
+    M_possible_commands_pairs.emplace_back(MainCommand::MC_DASH, MainCommand::MC_TACKLE);
+    M_possible_commands_pairs.emplace_back(MainCommand::MC_TURN, MainCommand::MC_TACKLE);
+    M_possible_commands_pairs.emplace_back(MainCommand::MC_KICK, MainCommand::MC_TACKLE);
+
+    M_possible_commands_pairs.emplace_back(MainCommand::MC_DASH, MainCommand::MC_CATCH);
+    M_possible_commands_pairs.emplace_back(MainCommand::MC_TURN, MainCommand::MC_CATCH);
+    M_possible_commands_pairs.emplace_back(MainCommand::MC_KICK, MainCommand::MC_CATCH);
 }
 
 void
