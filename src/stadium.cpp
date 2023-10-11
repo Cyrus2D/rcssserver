@@ -903,6 +903,7 @@ Stadium::turnMovableObjects()
                   DefaultRNG::instance() );
     for ( MPObjectCont::reference o : M_movable_objects )
     {
+        o->applyStoredCommands(false);
         o->_turn();
     }
 }
@@ -912,12 +913,21 @@ Stadium::incMovableObjects()
 {
     std::shuffle( M_movable_objects.begin(), M_movable_objects.end(),
                   DefaultRNG::instance() );
+    MPObject * movable_ball = nullptr;
     for ( MPObjectCont::reference o : M_movable_objects )
     {
+        if ( o->name() == "(ball)"){
+            movable_ball = o;
+            continue;
+        }
         if ( o->isEnabled() )
         {
-            o->_inc();
+            o->applyStoredCommands();
         }
+    }
+
+    if (movable_ball != nullptr){
+        movable_ball->_inc();
     }
 
     collisions();
@@ -2206,7 +2216,7 @@ Stadium::doRecvFromClients()
                       DefaultRNG::instance() );
         for ( PlayerCont::reference p : M_shuffle_players )
         {
-            p->doLongKick();
+//            p->doLongKick();
         }
     }
 

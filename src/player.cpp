@@ -248,6 +248,8 @@ Player::Player( Stadium & stadium,
     M_pos.x = -( unum() * 3 * team->side() );
     M_pos.y = - ServerParam::PITCH_WIDTH/2.0 - 3.0;
 
+    setDefaultPossibleMainPairCommands();
+
     setPlayerType( 0 );
     recoverAll();
 }
@@ -368,6 +370,67 @@ Player::init( const double ver,
     return true;
 }
 
+bool Player::canProcessMainCommand(const MainCommand::Type & command_type)
+{
+    if ( M_command_done ){
+        return false;
+    }
+
+    if ( M_stored_main_commands.size() == 2){
+        return false;
+    }
+
+    if ( M_stored_main_commands.empty()){
+        return true;
+    }
+
+    if ( M_stored_main_commands.front()->type() == MainCommand::Type::MC_MOVE){
+        return false;
+    }
+
+    if (command_type == MainCommand::Type::MC_MOVE && M_stored_main_commands.size() == 1){
+        return false;
+    }
+
+    if ( M_stored_main_commands.front()->type() == MainCommand::Type::MC_TACKLE){
+        return false;
+    }
+
+    if ( M_stored_main_commands.front()->type() == MainCommand::Type::MC_CATCH){
+        return false;
+    }
+
+    auto pair_commands = std::make_pair(M_stored_main_commands.at(0)->type(), command_type);
+    auto it = std::find_if( M_possible_commands_pairs.begin(), M_possible_commands_pairs.end(),
+                            [&pair_commands](const std::pair<MainCommand::Type, MainCommand::Type>& element)
+                            { return element.first == pair_commands.first &&
+                                     element.second == pair_commands.second;} );
+    if ( it != M_possible_commands_pairs.end() )
+    {
+        return true;
+    }
+
+    return false;
+}
+
+
+void Player::setDefaultPossibleMainPairCommands()
+{
+    M_possible_commands_pairs.emplace_back(MainCommand::MC_TURN, MainCommand::MC_DASH);
+    M_possible_commands_pairs.emplace_back(MainCommand::MC_DASH, MainCommand::MC_TURN);
+    M_possible_commands_pairs.emplace_back(MainCommand::MC_KICK, MainCommand::MC_TURN);
+    M_possible_commands_pairs.emplace_back(MainCommand::MC_TURN, MainCommand::MC_KICK);
+    M_possible_commands_pairs.emplace_back(MainCommand::MC_KICK, MainCommand::MC_DASH);
+    M_possible_commands_pairs.emplace_back(MainCommand::MC_DASH, MainCommand::MC_KICK);
+
+    M_possible_commands_pairs.emplace_back(MainCommand::MC_DASH, MainCommand::MC_TACKLE);
+    M_possible_commands_pairs.emplace_back(MainCommand::MC_TURN, MainCommand::MC_TACKLE);
+    M_possible_commands_pairs.emplace_back(MainCommand::MC_KICK, MainCommand::MC_TACKLE);
+
+    M_possible_commands_pairs.emplace_back(MainCommand::MC_DASH, MainCommand::MC_CATCH);
+    M_possible_commands_pairs.emplace_back(MainCommand::MC_TURN, MainCommand::MC_CATCH);
+    M_possible_commands_pairs.emplace_back(MainCommand::MC_KICK, MainCommand::MC_CATCH);
+}
 
 void
 Player::initObservationMode()
@@ -709,20 +772,6 @@ Player::parseCommand( const char * command )
             buf += n_read;
 
             kick( power, dir );
-        }
-        else if ( ! std::strncmp( buf, "(long_kick ", 11 ) )
-        {
-            double power = 0.0;
-            double dir = 0.0;
-            if ( std::sscanf( buf, " ( long_kick %lf %lf ) %n ",
-                              &power, &dir, &n_read ) != 2 )
-            {
-                std::cerr << "Error parsing >" << buf << "<\n";
-                return false;
-            }
-            buf += n_read;
-
-            long_kick( power, dir );
         }
         else if ( ! std::strncmp( buf, "(tackle ", 8 ) )
         {
@@ -1091,81 +1140,89 @@ void
 Player::dash( double power,
               double dir )
 {
-    if ( ! M_command_done )
-    {
-        const ServerParam & param = ServerParam::instance();
-
-        power = NormalizeDashPower( power );
-        dir = NormalizeDashAngle( dir );
-
-        if ( param.dashAngleStep() < EPS )
-        {
-            // players can dash in any direction.
-        }
-        else
-        {
-            // The dash direction is discretized by server::dash_angle_step
-            dir = param.dashAngleStep() * rint( dir / param.dashAngleStep() );
-        }
-
-        bool back_dash = power < 0.0;
-
-        double power_need = ( back_dash
-                              ? power * -2.0
-                              : power );
-        power_need = std::min( power_need, stamina() + M_player_type->extraStamina() );
-        M_stamina = std::max( 0.0, stamina() - power_need );
-
-        power = ( back_dash
-                  ? power_need / -2.0
-                  : power_need );
-
-        double dir_rate = ( std::fabs( dir ) > 90.0
-                            ? param.backDashRate() - ( ( param.backDashRate() - param.sideDashRate() )
-                                                       * ( 1.0 - ( std::fabs( dir ) - 90.0 ) / 90.0 ) )
-                            : param.sideDashRate() + ( ( 1.0 - param.sideDashRate() )
-                                                       * ( 1.0 - std::fabs( dir ) / 90.0 ) )
-                            );
-        dir_rate = rcss::bound( 0.0, dir_rate, 1.0 );
-
-        double effective_dash_power = std::fabs( effort()
-                                                 * power
-                                                 * dir_rate
-                                                 * M_player_type->dashPowerRate() );
-        if ( pos().y < 0.0 )
-        {
-            effective_dash_power /= ( side() == LEFT
-                                      ? param.slownessOnTopForLeft()
-                                      : param.slownessOnTopForRight() );
-        }
-
-        if ( back_dash )
-        {
-            dir += 180.0;
-        }
-
-        push( PVector::fromPolar( effective_dash_power,
-                                  normalize_angle( angleBodyCommitted() + Deg2Rad( dir ) ) ) );
-
-        M_dash_cycles = 1;
-        ++M_dash_count;
-        M_command_done = true;
+    if (canProcessMainCommand(MainCommand::Type::MC_DASH)){
+        M_stored_main_commands.push_back(std::make_shared<MainCommandDash>(power, dir));
     }
 }
 
+void
+Player::applyDash( double power,
+                   double dir )
+{
+    const ServerParam & param = ServerParam::instance();
+
+    power = NormalizeDashPower( power );
+    dir = NormalizeDashAngle( dir );
+
+    if ( param.dashAngleStep() < EPS )
+    {
+        // players can dash in any direction.
+    }
+    else
+    {
+        // The dash direction is discretized by server::dash_angle_step
+        dir = param.dashAngleStep() * rint( dir / param.dashAngleStep() );
+    }
+
+    bool back_dash = power < 0.0;
+
+    double power_need = ( back_dash
+                          ? power * -2.0
+                          : power );
+    power_need = std::min( power_need, stamina() + M_player_type->extraStamina() );
+    M_stamina = std::max( 0.0, stamina() - power_need );
+
+    power = ( back_dash
+              ? power_need / -2.0
+              : power_need );
+
+    double dir_rate = ( std::fabs( dir ) > 90.0
+                        ? param.backDashRate() - ( ( param.backDashRate() - param.sideDashRate() )
+                                                   * ( 1.0 - ( std::fabs( dir ) - 90.0 ) / 90.0 ) )
+                        : param.sideDashRate() + ( ( 1.0 - param.sideDashRate() )
+                                                   * ( 1.0 - std::fabs( dir ) / 90.0 ) )
+                        );
+    dir_rate = rcss::bound( 0.0, dir_rate, 1.0 );
+
+    double effective_dash_power = std::fabs( effort()
+                                             * power
+                                             * dir_rate
+                                             * M_player_type->dashPowerRate() );
+    if ( pos().y < 0.0 )
+    {
+        effective_dash_power /= ( side() == LEFT
+                                  ? param.slownessOnTopForLeft()
+                                  : param.slownessOnTopForRight() );
+    }
+
+    if ( back_dash )
+    {
+        dir += 180.0;
+    }
+
+    push( PVector::fromPolar( effective_dash_power,
+                              normalize_angle( angleBodyCommitted() + Deg2Rad( dir ) ) ) );
+
+    M_dash_cycles = 1;
+    ++M_dash_count;
+}
 
 void
 Player::turn( double moment )
 {
-    if ( ! M_command_done )
-    {
-        M_angle_body = normalize_angle( angleBodyCommitted()
-                                        + ( 1.0 + drand( -M_randp, M_randp ) )
-                                        * NormalizeMoment( moment )
-                                        / ( 1.0 + M_player_type->inertiaMoment() * vel().r() ) );
-        ++M_turn_count;
-        M_command_done = true;
+    if (canProcessMainCommand(MainCommand::Type::MC_DASH)){
+        M_stored_main_commands.push_back(std::make_shared<MainCommandTurn>(moment));
     }
+}
+
+void
+Player::applyTurn( double moment )
+{
+    M_angle_body = normalize_angle( angleBodyCommitted()
+                                    + ( 1.0 + drand( -M_randp, M_randp ) )
+                                    * NormalizeMoment( moment )
+                                    / ( 1.0 + M_player_type->inertiaMoment() * vel().r() ) );
+    ++M_turn_count;
 }
 
 void
@@ -1195,14 +1252,15 @@ Player::change_focus( double moment_dist, double moment_dir )
 
 void
 Player::kick( double power,
-              double dir )
-{
-    if ( M_command_done )
-    {
-        return;
+              double dir ) {
+    if (canProcessMainCommand(MainCommand::Type::MC_KICK)){
+        M_stored_main_commands.push_back(std::make_shared<MainCommandKick>(power, dir));
     }
-
-    M_command_done = true;
+}
+void
+Player::applyKick( double power,
+                   double dir )
+{
     M_kick_cycles = 1;
 
     power = NormalizeKickPower( power );
@@ -1308,120 +1366,19 @@ Player::kick( double power,
     ++M_kick_count;
 }
 
-// 2011-05-14 akiyama
-// added for testing purpose
-void
-Player::long_kick( double power,
-                   double dir )
-{
-    return;
-
-    if ( M_command_done )
-    {
-        return;
-    }
-
-    M_command_done = true;
-    M_kick_cycles = ServerParam::instance().longKickDelay() + 1;
-
-    M_long_kick_power = NormalizeKickPower( power );
-    M_long_kick_dir = NormalizeMoment( dir );
-
-    M_state |= KICK;
-}
-
-void
-Player::doLongKick()
-{
-    if ( ! isEnabled() )
-    {
-        return;
-    }
-
-    if ( M_kick_cycles != 1 )
-    {
-        return;
-    }
-
-    if ( M_stadium.playmode() == PM_BeforeKickOff ||
-         M_stadium.playmode() == PM_AfterGoal_Left ||
-         M_stadium.playmode() == PM_AfterGoal_Right ||
-         M_stadium.playmode() == PM_OffSide_Left ||
-         M_stadium.playmode() == PM_OffSide_Right ||
-         M_stadium.playmode() == PM_Illegal_Defense_Left ||
-         M_stadium.playmode() == PM_Illegal_Defense_Right ||
-         M_stadium.playmode() == PM_Foul_Charge_Left ||
-         M_stadium.playmode() == PM_Foul_Charge_Right ||
-         M_stadium.playmode() == PM_Foul_Push_Left ||
-         M_stadium.playmode() == PM_Foul_Push_Right ||
-         M_stadium.playmode() == PM_Back_Pass_Left ||
-         M_stadium.playmode() == PM_Back_Pass_Right ||
-         M_stadium.playmode() == PM_Free_Kick_Fault_Left ||
-         M_stadium.playmode() == PM_Free_Kick_Fault_Right ||
-         M_stadium.playmode() == PM_CatchFault_Left ||
-         M_stadium.playmode() == PM_CatchFault_Right ||
-         M_stadium.playmode() == PM_TimeOver )
-    {
-        M_state |= KICK_FAULT;
-        return;
-    }
-
-    if ( ! ballKickable() )
-    {
-        M_state |= KICK_FAULT;
-        M_stadium.failedKickTaken( *this );
-        return;
-    }
-
-    double dir_diff = std::fabs( angleFromBody( M_stadium.ball() ) );
-    PVector rpos = M_stadium.ball().pos() - this->pos();
-    double dist_ball
-        = rpos.r()
-        - M_player_type->playerSize()
-        - ServerParam::instance().ballSize();
-
-    double eff_power = M_long_kick_power
-        * ( M_player_type->kickPowerRate() * ServerParam::instance().longKickPowerFactor() )
-        * (1.0 - 0.25*dir_diff/M_PI - 0.25*dist_ball/M_player_type->kickableMargin());
-
-    PVector accel = PVector::fromPolar( eff_power,
-                                        M_long_kick_dir + angleBodyCommitted() );
-
-    // [0.5, 1.0]
-    double pos_rate
-        = 0.5
-        + 0.25 * ( dir_diff/M_PI + dist_ball/M_player_type->kickableMargin() );
-    // [0.5, 1.0]
-    double speed_rate
-        = 0.5
-        + 0.5 * ( M_stadium.ball().vel().r()
-                  / ( ServerParam::instance().ballSpeedMax()
-                      * ServerParam::instance().ballDecay() ) );
-    // [0, 2*kick_rand]
-    double max_rand
-        = M_kick_rand
-        * ( M_long_kick_power / ServerParam::instance().maxPower() )
-        * ( pos_rate + speed_rate );
-    PVector kick_noise = PVector::fromPolar( drand( 0.0, max_rand ),
-                                             drand( -M_PI, M_PI ) );
-    accel += kick_noise;
-
-    M_stadium.kickTaken( *this, accel );
-
-    ++M_kick_count;
-}
-
 void
 Player::goalieCatch( double dir )
 {
-    if ( M_command_done )
-    {
-        return;
+    if (canProcessMainCommand(MainCommand::Type::MC_CATCH)){
+        M_stored_main_commands.push_back(std::make_shared<MainCommandCatch>(dir));
     }
+}
 
+void
+Player::applyGoalieCatch( double dir )
+{
     dir = NormalizeCatchAngle( dir );
 
-    M_command_done = true;
     M_state |= CATCH;
 
     //pfr: we should only be able to catch in PlayOn mode
@@ -1620,11 +1577,15 @@ void
 Player::move( double x,
               double y )
 {
-    if ( M_command_done )
-    {
-        return;
+    if (canProcessMainCommand(MainCommand::Type::MC_MOVE)){
+        M_stored_main_commands.push_back(std::make_shared<MainCommandMove>(x, y));
     }
+}
 
+void
+Player::applyMove( double x,
+                   double y )
+{
     if ( M_stadium.playmode() == PM_BeforeKickOff ||
          M_stadium.playmode() == PM_AfterGoal_Right ||
          M_stadium.playmode() == PM_AfterGoal_Left
@@ -1664,7 +1625,6 @@ Player::move( double x,
         return;
     }
 
-    M_command_done = true;
     ++M_move_count;
 }
 
@@ -1956,12 +1916,17 @@ void
 Player::tackle( double power_or_angle,
                 bool foul )
 {
-    if ( M_command_done )
-    {
-        return;
+    if (canProcessMainCommand(MainCommand::Type::MC_TACKLE)){
+        M_stored_main_commands.push_back(std::make_shared<MainCommandTackle>(power_or_angle, foul));
     }
+}
 
+void
+Player::applyTackle( double power_or_angle,
+                     bool foul )
+{
     M_command_done = true;
+
     M_tackle_cycles = ServerParam::instance().tackleCycles();
     ++M_tackle_count;
 
@@ -2413,9 +2378,14 @@ Player::turnImpl()
 }
 
 void
-Player::updateAngle()
+Player::updateBodyAngle()
 {
     M_angle_body_committed = this->M_angle_body;
+}
+
+void
+Player::updateNeckAngle()
+{
     M_angle_neck_committed = this->M_angle_neck;
 }
 
@@ -2722,4 +2692,43 @@ Player::place( const PVector & pos,
     M_angle_body_committed = angle;
     M_vel = vel;
     M_accel = accel;
+}
+
+void Player::applyStoredCommands(bool call_inc)
+{
+    for (const auto & command: M_stored_main_commands){
+        if (command->type() == MainCommand::MC_DASH){
+            const auto* dash_command = dynamic_cast<const MainCommandDash*>(command.get());
+            applyDash(dash_command->power(), dash_command->dir());
+        }
+        else if (command->type() == MainCommand::MC_TURN){
+            const auto* turn_command = dynamic_cast<const MainCommandTurn*>(command.get());
+            applyTurn(turn_command->moment());
+        }
+        else if (command->type() == MainCommand::MC_KICK){
+            const auto* kick_command = dynamic_cast<const MainCommandKick*>(command.get());
+            applyKick(kick_command->power(), kick_command->dir());
+        }
+        else if (command->type() == MainCommand::MC_CATCH){
+            const auto* catch_command = dynamic_cast<const MainCommandCatch*>(command.get());
+            applyGoalieCatch(catch_command->dir());
+        }
+        else if (command->type() == MainCommand::MC_TACKLE){
+            const auto* tackle_command = dynamic_cast<const MainCommandTackle*>(command.get());
+            applyTackle(tackle_command->power(), tackle_command->foul());
+        }
+        else if (command->type() == MainCommand::MC_MOVE){
+            const auto* move_command = dynamic_cast<const MainCommandMove*>(command.get());
+            applyMove(move_command->x(), move_command->y());
+        }
+        if (call_inc)
+            this->_inc();
+    }
+    if (call_inc){
+        if (M_stored_main_commands.empty())
+            this->_inc();
+        this->updateNeckAngle();
+    }
+
+    M_stored_main_commands.clear();
 }

@@ -547,6 +547,9 @@ public:
 
     void _inc();
 
+    virtual
+    void applyStoredCommands(bool call_inc=true){}
+
     void _turn()
       {
           turnImpl();
@@ -607,8 +610,17 @@ protected:
     virtual
     void turnImpl() = 0;
 
+    void updateVel();
+
+    void addNoiseWindToVel();
+
+    PVector getPosUpdateVelForCollidedWithPost();
+
     virtual
-    void updateAngle() = 0;
+    void updateBodyAngle() = 0;
+
+    virtual
+    void updateNeckAngle() = 0;
 
     virtual
     void collidedWithPost() = 0;
@@ -645,7 +657,11 @@ public:
       { }
 
     virtual
-    void updateAngle() override
+    void updateBodyAngle() override
+      { }
+
+    virtual
+    void updateNeckAngle() override
       { }
 
     virtual

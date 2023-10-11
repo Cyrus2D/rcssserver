@@ -342,10 +342,6 @@ private:
     static const double ILLEGAL_DEFENSE_DIST_X;
     static const double ILLEGAL_DEFENSE_WIDTH;
 
-    // XXX
-    static const double LONG_KICK_POWER_FACTOR;
-    static const int LONG_KICK_DELAY;
-
     double M_goal_width; /* goal width */
     double M_inertia_moment; /* intertia moment for turn */
     double M_player_size; /* player size */
@@ -621,10 +617,6 @@ private:
     // 17.0.0
     double M_max_catch_angle;
     double M_min_catch_angle;
-
-    // XXX
-    double M_long_kick_power_factor;
-    int M_long_kick_delay;
 
 private:
 
@@ -979,10 +971,6 @@ public:
     // v17
     double maxCatchAngle() const { return M_max_catch_angle; }
     double minCatchAngle() const { return M_min_catch_angle; }
-
-    // XXX
-    double longKickPowerFactor() const { return M_long_kick_power_factor; }
-    int longKickDelay() const { return M_long_kick_delay; }
 
 };
 

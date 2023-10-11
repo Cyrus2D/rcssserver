@@ -43,6 +43,164 @@ class BodyObserverPlayer;
 class FullStateObserver;
 }
 
+class MainCommand
+{
+public:
+    enum Type {
+        MC_DASH,
+        MC_TURN,
+        MC_KICK,
+        MC_CATCH,
+        MC_TACKLE,
+        MC_MOVE,
+    };
+
+    typedef std::shared_ptr<MainCommand> Ptr;
+
+protected:
+    MainCommand(){};
+    Type M_type;
+
+public:
+    virtual ~MainCommand()=default;
+
+    const Type& type() const
+    {
+        return M_type;
+    }
+};
+
+class MainCommandDash: public MainCommand
+{
+private:
+    double M_power;
+    double M_dir;
+
+public:
+    MainCommandDash(double power, double dir)
+    {
+        M_type = MainCommand::MC_DASH;
+        M_power = power;
+        M_dir = dir;
+    }
+
+    const double& power() const
+    {
+        return M_power;
+    }
+
+    const double& dir() const
+    {
+        return M_dir;
+    }
+};
+
+class MainCommandTurn: public MainCommand
+{
+private:
+    double M_moment;
+public:
+    MainCommandTurn(double moment)
+    {
+        M_type = MainCommand::MC_TURN;
+        M_moment = moment;
+    }
+
+    const double& moment() const
+    {
+        return M_moment;
+    }
+};
+
+class MainCommandKick: public MainCommand
+{
+private:
+    double M_power;
+    double M_dir;
+public:
+    MainCommandKick(double power, double dir)
+    {
+        M_type = MainCommand::MC_KICK;
+        M_power = power;
+        M_dir = dir;
+    }
+
+    const double& power() const
+    {
+        return M_power;
+    }
+
+    const double& dir() const
+    {
+        return M_dir;
+    }
+};
+
+class MainCommandCatch: public MainCommand
+{
+private:
+    double M_dir;
+public:
+    MainCommandCatch(double dir)
+    {
+        M_type = MainCommand::MC_CATCH;
+        M_dir = dir;
+    }
+
+    const double& dir() const
+    {
+        return M_dir;
+    }
+};
+
+class MainCommandTackle: public MainCommand
+{
+private:
+    double M_power;
+    bool M_foul;
+public:
+    MainCommandTackle(double power, bool foul)
+    {
+        M_type = MainCommand::MC_TACKLE;
+        M_power = power;
+        M_foul = foul;
+    }
+
+    const double& power() const
+    {
+        return M_power;
+    }
+
+    const bool& foul() const
+    {
+        return M_foul;
+    }
+};
+
+class MainCommandMove: public MainCommand
+{
+private:
+    double M_x;
+    double M_y;
+public:
+    MainCommandMove(double x, double y)
+    {
+        M_type = MainCommand::MC_MOVE;
+        M_x = x;
+        M_y = y;
+    }
+
+    const double& x() const
+    {
+        return M_x;
+    }
+
+    const double& y() const
+    {
+        return M_y;
+    }
+};
+
 class Player
     : public MPObject,
       public RemoteClient,
@@ -158,6 +316,8 @@ private:
     //
     // command state
     //
+    std::vector<MainCommand::Ptr> M_stored_main_commands;
+    std::vector<std::pair<MainCommand::Type, MainCommand::Type>> M_possible_commands_pairs;
     bool M_command_done;
     bool M_turn_neck_done;
     bool M_done_received; //pfr:SYNCH
@@ -188,9 +348,6 @@ private:
     int M_foul_cycles;
     int M_foul_count;
 
-    double M_long_kick_power;
-    double M_long_kick_dir;
-
     double M_wide_view_angle_noise_term;
     double M_normal_view_angle_noise_term;
     double M_narrow_view_angle_noise_term;
@@ -198,7 +355,8 @@ private:
     // not used
     Player() = delete;
     const Player & operator=( const Player & ) = delete;
-
+    bool canProcessMainCommand(const MainCommand::Type & command_type);
+    void setDefaultPossibleMainPairCommands();
 public:
     Player( Stadium & stadium,
             Team * team,
@@ -449,15 +607,15 @@ public:
                 const PVector & vel,
                 const PVector & accel );
 
-    // 2011-05-14 akiyama
-    void doLongKick();
-
+    void applyStoredCommands(bool call_inc=true) override;
 protected:
 
     virtual
     void turnImpl() override;
     virtual
-    void updateAngle() override;
+    void updateBodyAngle() override;
+    virtual
+    void updateNeckAngle() override;
     virtual
     void collidedWithPost() override;
     virtual
@@ -473,18 +631,22 @@ private:
     /** PlayerCommands */
     void dash( double power ) override;
     void dash( double power, double dir ) override;
+    void applyDash( double power, double dir );
     void turn( double moment ) override;
+    void applyTurn( double moment );
     void turn_neck( double moment ) override;
     void change_focus( double moment_dist, double moment_dir) override;
     void kick( double power, double dir ) override;
-    void long_kick( double power, double dir ) override;
+    void applyKick( double power, double dir );
     void goalieCatch( double dir ) override;
+    void applyGoalieCatch( double dir );
     void say( std::string message ) override;
     /*! This function is called in the begin of each cycle
       and in case a player sends a sense_body command. */
     void sense_body() override;
     void score() override;
     void move( double x, double y ) override;
+    void applyMove( double x, double y );
     void change_view( rcss::pcom::VIEW_WIDTH viewWidth, rcss::pcom::VIEW_QUALITY viewQuality ) override;
     void change_view( rcss::pcom::VIEW_WIDTH viewWidth ) override;
     void compression( int level ) override;
@@ -494,6 +656,7 @@ private:
     void attentionto( bool on, rcss::pcom::TEAM team_side, std::string team_name, int at_unum ) override;
     void tackle( double power_or_angle ) override;
     void tackle( double power_or_angle, bool foul ) override;
+    void applyTackle( double power_or_angle, bool foul );
     void clang( int min, int max) override;
     void ear( bool on, rcss::pcom::TEAM team_side, std::string team_name, rcss::pcom::EAR_MODE mode ) override;
     void synch_see() override;
